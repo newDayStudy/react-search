@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Document</title>
+  <link href="https://cdn.bootcss.com/bootstrap/4.0.0-beta.2/css/bootstrap.css" rel="stylesheet">
+  <script src="http://static.wxkydd.com/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="js/react.js"></script>
+  <script src="js/react-dom.min.js"></script>
+  <script src="js/browser.js"></script>
+  <style type="text/css">
+    *{
+      font-size:12px;
+      font-style:normal;
+      margin:0;
+      padding:0;
+    }
+    .search{
+      text-align:center;
+      padding:10px;
+      display:flex;
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      background:#ddd;
+    }
+    input,button{
+      line-height:25px;
+    }
+    button{
+      flex:1
+    }
+    .book-item{
+      display:flex;
+      margin: 10px;
+      padding-bottom:10px;
+      border-bottom:1px solid #ddd;
+    }
+    ul{
+      padding-top:50px;
+    }
+    .bookimg{
+      width:80px;
+      margin-right:5px;
+    }
+    .black{
+      color:#000
+    }
+    .red{
+      color:red
+    }
+    .hidden{
+      display:none;
+    }
+    .title,
+    .author,
+    .date,
+    .publisher{
+      text-align:center
+    }
+    .content{
+      padding:0 10px;
+    }
+    .title{
+      padding:10px;
+    }
+    .green{
+      color:green
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="appid"></div>
+  <script src="api.js"></script>
+  <script type="text/babel">
+    var Input = React.createClass({
+      getInitialState:function(){
+        return {
+          value:''
+        }
+      },
+      onSearch:function(){
+        var $this = this
+        if ($this.state.value) {
+          api(
+            'GET',
+            'https://api.douban.com/v2/book/search',
+            {q:this.state.value,start:0,count:10},
+            function(res){
+              $this.props.bookList(res)
+            },function(err){
+            console.log(res)
+          })
+        }else{
+          alert('书名不能为空')
+        }
+      },
+      handelChange:function(event){
+        this.setState({
+          value: event.target.value
+        })
+      },
+      render:function(){
+        return (
+          <div className={'search'+' '+this.props.show}>
+            <input type="text" placeholder="请输入书名(例：基础教程)" onChange={this.handelChange} value={this.state.value}  className="form-control"/>
+            <button onClick={this.onSearch} className="btn btn-primary">搜索</button>
+          </div>
+        )
+      }
+    })
+    var Main = React.createClass({
+      getInitialState:function(){
+        return {
+          resource:[],
+          show: false,
+          id: '',
+          detail:{}
+        }
+      },
+      getList:function(list){
+        this.setState({
+          resource: list.books
+        })
+      },
+      handelClick:function(){
+        var id = arguments[0]
+        var $this = this
+        api(
+          'GET',
+          'https://api.douban.com/v2/book/'+id,
+          {},
+          function(res){
+            $this.setState({
+              detail: res,
+              show: true
+            })
+            console.log($this)
+          },
+          function(err){
+            console.log(err)
+          }
+        )
+      },
+      render:function(){
+        let $this = this
+        return (
+          <div className="box">
+            <Input bookList={this.getList} show={this.state.show?'hidden':''}/>
+            <ul className={this.state.show?'hidden':''}>
+              {
+                this.state.resource.map(function(item,key){
+                  return <li data-key={key} className="book-item" onClick={$this.handelClick.bind($this,item.id)}>
+                    <img src={item.images.small} className="bookimg"/>
+                    <div>
+                      <p className="black">{item.title}</p>
+                      <p>{item.author[0]}</p>
+                      <p className="red">￥{item.price}</p>
+                    </div>
+                  </li>
+                })
+              }
+            </ul>
+            <Detail bookDetail={this.state.detail} show={this.state.show?'':'hidden'} />
+          </div>
+        )
+      }
+    })
+    var Detail = React.createClass({
+      render:function(){
+        var detail = this.props.bookDetail
+        console.log(detail)
+        if (JSON.stringify(detail)!='{}'){
+          return (
+            <div className={'bookDetail'+' '+this.props.show}>
+              <h3 className="title">{detail.title}</h3>
+              <p className="author red">作者：{detail.author[0]}</p>
+              <p className="date green">出版日期：{detail.pubdate}</p>
+              <p className="publisher red">出版社：{detail.publisher}</p>
+              <p className="content">{detail.summary}</p>
+            </div>
+          )
+        }else{
+          return (
+            <div className={'bookDetail'+' '+this.props.show}>
+              {/*<h2>{detail.title}</h2>
+              <p>作者{detail.author[0]} 出版日期detail.pubdate} 出版社{detail.publisher}</p>
+              <p>{detail.summary}</p>*/}
+            </div>
+          )
+        }
+        
+      }
+    })
+    ReactDOM.render(<Main />,document.getElementById('app'))
+
+    
+  </script>
+</body>
+</html>
