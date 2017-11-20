@@ -145,6 +145,11 @@
           }
         )
       },
+      changeShow:function(val){
+        this.setState({
+          show: val
+        })
+      },
       render:function(){
         let $this = this
         return (
@@ -164,18 +169,22 @@
                 })
               }
             </ul>
-            <Detail bookDetail={this.state.detail} show={this.state.show?'':'hidden'} />
+            <Detail bookDetail={this.state.detail} show={this.state.show?'':'hidden'} handelChange={this.changeShow}/>
           </div>
         )
       }
     })
     var Detail = React.createClass({
+      toBack:function(){
+        this.props.handelChange(false)
+      },
       render:function(){
         var detail = this.props.bookDetail
         console.log(detail)
         if (JSON.stringify(detail)!='{}'){
           return (
             <div className={'bookDetail'+' '+this.props.show}>
+              <button onClick={this.toBack} className="btn btn-primary">返回</button>
               <h3 className="title">{detail.title}</h3>
               <p className="author red">作者：{detail.author[0]}</p>
               <p className="date green">出版日期：{detail.pubdate}</p>
